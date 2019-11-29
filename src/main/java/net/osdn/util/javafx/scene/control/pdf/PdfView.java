@@ -1,9 +1,12 @@
-package net.osdn.util.fx.pdf;
+package net.osdn.util.javafx.scene.control.pdf;
 
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
@@ -72,7 +75,17 @@ public class PdfView extends Region {
 		maxPageIndexProperty.set(value);
 	}
 
-	
+	private DoubleProperty renderScaleProperty
+		= new SimpleDoubleProperty(this, "renderScale");
+
+	public ReadOnlyDoubleProperty renderScaleProperty() {
+		return renderScaleProperty;
+	}
+	public final double getRenderScale() {
+		return renderScaleProperty.get();
+	}
+
+	private RenderingHints renderingHints;
 	
 	private ProgressIndicator progressIndicator;
 	private Canvas canvas;
@@ -82,6 +95,7 @@ public class PdfView extends Region {
 	private ExecutorService worker;
 	private double width;
 	private double height;
+	private double scale;
 	private PDDocument document;
 	private int pageIndex;
 	
@@ -124,6 +138,14 @@ public class PdfView extends Region {
 			update();
 		});
 	}
+
+	public void setRenderingHints(RenderingHints hints) {
+		renderingHints = hints;
+	}
+
+	public RenderingHints getRenderingHints() {
+		return renderingHints;
+	}
 	
 	public void update() {
 		isDirty = true;
@@ -140,6 +162,7 @@ public class PdfView extends Region {
 			worker.submit(() -> {
 				WritableImage img = prepare();
 				Platform.runLater(() -> {
+					renderScaleProperty.set(scale);
 					GraphicsContext gc = canvas.getGraphicsContext2D();
 					gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 					if(img != null) {
@@ -158,6 +181,7 @@ public class PdfView extends Region {
 	
 	protected WritableImage prepare() {
 		if(document == null) {
+			scale = 0.0;
 			return null;
 		}
 		PDRectangle paper = document.getPage(pageIndex).getCropBox();
@@ -170,7 +194,7 @@ public class PdfView extends Region {
 			w = width;
 			h = width * paper.getHeight() / paper.getWidth();
 		}
-		float scale = (float)(h / paper.getHeight());
+		scale = h / paper.getHeight();
 		
 		if(bimg == null || bimg.getWidth() != (int)w || bimg.getHeight() != (int)h) {
 			bimg = new BufferedImage((int)w, (int)h, BufferedImage.TYPE_INT_RGB);
@@ -183,7 +207,10 @@ public class PdfView extends Region {
 			graphics.clearRect(0, 0, (int)w, (int)h);
 			
 			PDFRenderer renderer = new PDFRenderer(document);
-			renderer.renderPageToGraphics(pageIndex, graphics, scale);
+			if(renderingHints != null) {
+				renderer.setRenderingHints(renderingHints);
+			}
+			renderer.renderPageToGraphics(pageIndex, graphics, (float)scale);
 			return SwingFXUtils.toFXImage(bimg, wimg);
 		} catch(IOException e) {
 			throw new RuntimeException(e);
