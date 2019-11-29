@@ -1,4 +1,4 @@
-package net.osdn.util.fx.pdf;
+package net.osdn.util.javafx.scene.control.pdf;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
