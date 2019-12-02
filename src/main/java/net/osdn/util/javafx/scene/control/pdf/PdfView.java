@@ -6,11 +6,13 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ProgressIndicator;
@@ -21,7 +23,9 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -83,6 +87,16 @@ public class PdfView extends Region {
 	}
 	public final double getRenderScale() {
 		return renderScaleProperty.get();
+	}
+
+	private ObjectProperty<Rectangle2D> renderBounds
+		= new SimpleObjectProperty<Rectangle2D>(this, "renderBounds", Rectangle2D.EMPTY);
+
+	public ReadOnlyObjectProperty<Rectangle2D> renderBoundsProperty() {
+		return renderBounds;
+	}
+	public Rectangle2D getRenderBounds() {
+		return renderBounds.get();
 	}
 
 	private RenderingHints renderingHints;
@@ -169,6 +183,9 @@ public class PdfView extends Region {
 						double x = (canvas.getWidth() - img.getWidth()) / 2;
 						double y = (canvas.getHeight() - img.getHeight()) / 2;
 						gc.drawImage(img, x, y);
+						renderBounds.set(new Rectangle2D(x, y, img.getWidth(), img.getHeight()));
+					} else {
+						renderBounds.set(Rectangle2D.EMPTY);
 					}
 					isBusy = false;
 					if(isDirty) {
