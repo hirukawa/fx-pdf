@@ -48,6 +48,17 @@ public class PdfView extends Region {
 		return documentProperty.get();
 	}
 	public final void setDocument(PDDocument value) {
+		initialPageIndex = 0;
+		documentProperty.set(value);
+	}
+	public final void setDocument(PDDocument value, int pageIndex) {
+		if(value == null || pageIndex < 0) {
+			initialPageIndex = 0;
+		} else if(pageIndex >= value.getNumberOfPages()) {
+			initialPageIndex = value.getNumberOfPages() - 1;
+		} else {
+			initialPageIndex = pageIndex;
+		}
 		documentProperty.set(value);
 	}
 
@@ -110,6 +121,7 @@ public class PdfView extends Region {
 	private double width;
 	private double height;
 	private double scale;
+	private int initialPageIndex;
 	private PDDocument document;
 	private int pageIndex;
 	
@@ -133,7 +145,7 @@ public class PdfView extends Region {
 		getChildren().add(progressIndicator);
 		
 		documentProperty.addListener((observable, oldValue, newValue) -> {
-			pageIndexProperty.set(0);
+			pageIndexProperty.set(initialPageIndex);
 			if(newValue == null) {
 				maxPageIndexProperty.set(0);
 			} else {
@@ -141,7 +153,7 @@ public class PdfView extends Region {
 			}
 			update();
 		});
-		
+
 		pageIndexProperty.addListener((observable, oldValue, newValue) -> {
 			update();
 		});
@@ -248,7 +260,7 @@ public class PdfView extends Region {
 		super.layoutChildren();
 	}
 	
-	public Task<PDDocument> load(Callable<PDDocument> loader) {
+	public Task<PDDocument> load(Callable<PDDocument> loader, final int initialPageIndex) {
 		Task<PDDocument> task = new Task<PDDocument>() {
 			@Override
 			protected PDDocument call() throws Exception {
@@ -270,9 +282,9 @@ public class PdfView extends Region {
 							graphics.dispose();
 						}
 					}
-					
+
 					Platform.runLater(() -> {
-						setDocument(document);
+						setDocument(document, initialPageIndex);
 					});
 					return document;
 				} finally {
@@ -302,69 +314,133 @@ public class PdfView extends Region {
 	}
 	
 	public Task<PDDocument> load(File file) {
-		return load(() -> PDDocument.load(file));
+		return load(() -> PDDocument.load(file), 0);
 	}
-	
+
+	public Task<PDDocument> load(File file, int initialPageIndex) {
+		return load(() -> PDDocument.load(file), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(File file, MemoryUsageSetting memUsageSetting) {
-		return load(() -> PDDocument.load(file, memUsageSetting));
+		return load(() -> PDDocument.load(file, memUsageSetting), 0);
 	}
-	
+
+	public Task<PDDocument> load(File file, int initialPageIndex, MemoryUsageSetting memUsageSetting) {
+		return load(() -> PDDocument.load(file, memUsageSetting), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(File file, String password) {
-		return load(() -> PDDocument.load(file, password));
+		return load(() -> PDDocument.load(file, password), 0);
 	}
-	
+
+	public Task<PDDocument> load(File file, int initialPageIndex, String password) {
+		return load(() -> PDDocument.load(file, password), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(File file, String password, MemoryUsageSetting memUsageSetting) {
-		return load(() -> PDDocument.load(file, password, memUsageSetting));
+		return load(() -> PDDocument.load(file, password, memUsageSetting), 0);
 	}
-	
+
+	public Task<PDDocument> load(File file, int initialPageIndex, String password, MemoryUsageSetting memUsageSetting) {
+		return load(() -> PDDocument.load(file, password, memUsageSetting), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(File file, String password, InputStream keyStore, String alias) {
-		return load(() -> PDDocument.load(file, password, keyStore, alias));
+		return load(() -> PDDocument.load(file, password, keyStore, alias), 0);
 	}
-	
+
+	public Task<PDDocument> load(File file, int initialPageIndex, String password, InputStream keyStore, String alias) {
+		return load(() -> PDDocument.load(file, password, keyStore, alias), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(File file, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) {
-		return load(() -> PDDocument.load(file, password, keyStore, alias, memUsageSetting));
+		return load(() -> PDDocument.load(file, password, keyStore, alias, memUsageSetting), 0);
 	}
-	
+
+	public Task<PDDocument> load(File file, int initialPageIndex, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) {
+		return load(() -> PDDocument.load(file, password, keyStore, alias, memUsageSetting), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(InputStream input) {
-		return load(() -> PDDocument.load(input));
+		return load(() -> PDDocument.load(input), 0);
 	}
-	
+
+	public Task<PDDocument> load(InputStream input, int initialPageIndex) {
+		return load(() -> PDDocument.load(input), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(InputStream input, MemoryUsageSetting memUsageSetting) {
-		return load(() -> PDDocument.load(input, memUsageSetting));
+		return load(() -> PDDocument.load(input, memUsageSetting), 0);
 	}
-	
+
+	public Task<PDDocument> load(InputStream input, int initialPageIndex, MemoryUsageSetting memUsageSetting) {
+		return load(() -> PDDocument.load(input, memUsageSetting), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(InputStream input, String password) {
-		return load(() -> PDDocument.load(input, password));
+		return load(() -> PDDocument.load(input, password), 0);
 	}
-	
+
+	public Task<PDDocument> load(InputStream input, int initialPageIndex, String password) {
+		return load(() -> PDDocument.load(input, password), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(InputStream input, String password, InputStream keyStore, String alias) {
-		return load(() -> PDDocument.load(input, password, keyStore, alias));
+		return load(() -> PDDocument.load(input, password, keyStore, alias), 0);
 	}
-	
+
+	public Task<PDDocument> load(InputStream input, int initialPageIndex, String password, InputStream keyStore, String alias) {
+		return load(() -> PDDocument.load(input, password, keyStore, alias), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(InputStream input, String password, MemoryUsageSetting memUsageSetting) {
-		return load(() -> PDDocument.load(input, password, memUsageSetting));
+		return load(() -> PDDocument.load(input, password, memUsageSetting), 0);
 	}
-	
+
+	public Task<PDDocument> load(InputStream input, int initialPageIndex, String password, MemoryUsageSetting memUsageSetting) {
+		return load(() -> PDDocument.load(input, password, memUsageSetting), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(InputStream input, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) {
-		return load(() -> PDDocument.load(input, password, keyStore, alias, memUsageSetting));
+		return load(() -> PDDocument.load(input, password, keyStore, alias, memUsageSetting), 0);
 	}
-	
+
+	public Task<PDDocument> load(InputStream input, int initialPageIndex, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) {
+		return load(() -> PDDocument.load(input, password, keyStore, alias, memUsageSetting), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(byte[] input) {
-		return load(() -> PDDocument.load(input));
+		return load(() -> PDDocument.load(input), 0);
 	}
-	
+
+	public Task<PDDocument> load(byte[] input, int initialPageIndex) {
+		return load(() -> PDDocument.load(input), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(byte[] input, String password) {
-		return load(() -> PDDocument.load(input, password));
+		return load(() -> PDDocument.load(input, password), 0);
 	}
-	
+
+	public Task<PDDocument> load(byte[] input, int initialPageIndex, String password) {
+		return load(() -> PDDocument.load(input, password), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(byte[] input, String password, InputStream keyStore, String alias) {
-		return load(() -> PDDocument.load(input, password, keyStore, alias));
+		return load(() -> PDDocument.load(input, password, keyStore, alias), 0);
 	}
-	
+
+	public Task<PDDocument> load(byte[] input, int initialPageIndex, String password, InputStream keyStore, String alias) {
+		return load(() -> PDDocument.load(input, password, keyStore, alias), initialPageIndex);
+	}
+
 	public Task<PDDocument> load(byte[] input, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) {
-		return load(() -> PDDocument.load(input, password, keyStore, alias, memUsageSetting));
+		return load(() -> PDDocument.load(input, password, keyStore, alias, memUsageSetting), 0);
 	}
-	
+
+	public Task<PDDocument> load(byte[] input, int initialPageIndex, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) {
+		return load(() -> PDDocument.load(input, password, keyStore, alias, memUsageSetting), initialPageIndex);
+	}
+
 	protected static void runAndWait(Runnable runnable) throws InterruptedException, InvocationTargetException {
 		if(Platform.isFxApplicationThread()) {
             throw new Error("Cannot call runAndWait from the FX Application Thread");
