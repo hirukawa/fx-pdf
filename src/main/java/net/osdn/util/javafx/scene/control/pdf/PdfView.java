@@ -114,7 +114,8 @@ public class PdfView extends Region {
 	
 	private ProgressIndicator progressIndicator;
 	private Canvas canvas;
-	private boolean isDirty;
+	private boolean isSizeDirty;
+	private boolean isPageDirty;
 	private boolean isBusy;
 
 	private ExecutorService worker;
@@ -151,17 +152,29 @@ public class PdfView extends Region {
 			} else {
 				maxPageIndexProperty.set(newValue.getNumberOfPages() - 1);
 			}
-			update();
+			updatePage();
 		});
 
 		pageIndexProperty.addListener((observable, oldValue, newValue) -> {
-			update();
+			updatePage();
 		});
 		widthProperty().addListener((observable, oldValue, newValue) -> {
-			update();
+			double width = getWidth();
+			double height = getHeight();
+			Platform.runLater(() -> {
+				if(width == getWidth() && height == getHeight()) {
+					updateSize();
+				}
+			});
 		});
 		heightProperty().addListener((observable, oldValue, newValue) -> {
-			update();
+			double width = getWidth();
+			double height = getHeight();
+			Platform.runLater(() -> {
+				if(width == getWidth() && height == getHeight()) {
+					updateSize();
+				}
+			});
 		});
 	}
 
@@ -172,13 +185,22 @@ public class PdfView extends Region {
 	public RenderingHints getRenderingHints() {
 		return renderingHints;
 	}
-	
-	public void update() {
-		isDirty = true;
-		
+
+	public void updatePage() {
+		isPageDirty = true;
+		update();
+	}
+
+	public void updateSize() {
+		isSizeDirty = true;
+		update();
+	}
+
+	private void update() {
 		if(!isBusy) {
 			isBusy = true;
-			isDirty = false;
+			isPageDirty = false;
+			isSizeDirty = false;
 			
 			width = getWidth();
 			height = getHeight();
@@ -188,20 +210,24 @@ public class PdfView extends Region {
 			worker.submit(() -> {
 				WritableImage img = prepare();
 				Platform.runLater(() -> {
-					renderScaleProperty.set(scale);
-					GraphicsContext gc = canvas.getGraphicsContext2D();
-					gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-					if(img != null) {
-						double x = (canvas.getWidth() - img.getWidth()) / 2;
-						double y = (canvas.getHeight() - img.getHeight()) / 2;
-						gc.drawImage(img, x, y);
-						renderBounds.set(new Rectangle2D(x, y, img.getWidth(), img.getHeight()));
-					} else {
-						renderBounds.set(Rectangle2D.EMPTY);
-					}
 					isBusy = false;
-					if(isDirty) {
-						update();
+					if(isSizeDirty) {
+						updateSize();
+					} else {
+						renderScaleProperty.set(scale);
+						GraphicsContext gc = canvas.getGraphicsContext2D();
+						gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+						if(img != null) {
+							double x = (canvas.getWidth() - img.getWidth()) / 2;
+							double y = (canvas.getHeight() - img.getHeight()) / 2;
+							gc.drawImage(img, x, y);
+							renderBounds.set(new Rectangle2D(x, y, img.getWidth(), img.getHeight()));
+						} else {
+							renderBounds.set(Rectangle2D.EMPTY);
+						}
+						if(isPageDirty) {
+							updatePage();
+						}
 					}
 				});
 			});
