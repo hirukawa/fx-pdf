@@ -356,124 +356,124 @@ public class PdfView extends Region {
 		return task;
 	}
 
-	public Task<PDDocument> load(File file) throws IOException {
+	public Task<PDDocument> load(File file) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input), 0);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes());
+			}
+		}, 0);
 	}
 
-	public Task<PDDocument> load(File file, int initialPageIndex) throws IOException {
+	public Task<PDDocument> load(File file, int initialPageIndex) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input), initialPageIndex);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes());
+			}
+		}, initialPageIndex);
 	}
 
-	public Task<PDDocument> load(File file, MemoryUsageSetting memUsageSetting) throws IOException {
+	public Task<PDDocument> load(File file, MemoryUsageSetting memUsageSetting) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, "", null, null, memUsageSetting), 0);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), "", null, null, memUsageSetting);
+			}
+		}, 0);
 	}
 
-	public Task<PDDocument> load(File file, int initialPageIndex, MemoryUsageSetting memUsageSetting) throws IOException {
+	public Task<PDDocument> load(File file, int initialPageIndex, MemoryUsageSetting memUsageSetting) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(file, "", null, null, memUsageSetting), initialPageIndex);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), "", null, null, memUsageSetting);
+			}
+		}, initialPageIndex);
 	}
 
-	public Task<PDDocument> load(File file, String password) throws IOException {
+	public Task<PDDocument> load(File file, String password) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, password), 0);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), password);
+			}
+		}, 0);
 	}
 
-	public Task<PDDocument> load(File file, int initialPageIndex, String password) throws IOException {
+	public Task<PDDocument> load(File file, int initialPageIndex, String password) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, password), initialPageIndex);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), password);
+			}
+		}, initialPageIndex);
 	}
 
-	public Task<PDDocument> load(File file, String password, MemoryUsageSetting memUsageSetting) throws IOException {
+	public Task<PDDocument> load(File file, String password, MemoryUsageSetting memUsageSetting) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, password, null, null, memUsageSetting), 0);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), password, null, null, memUsageSetting);
+			}
+		}, 0);
 	}
 
-	public Task<PDDocument> load(File file, int initialPageIndex, String password, MemoryUsageSetting memUsageSetting) throws IOException {
+	public Task<PDDocument> load(File file, int initialPageIndex, String password, MemoryUsageSetting memUsageSetting) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, password, null, null, memUsageSetting), initialPageIndex);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), password, null, null, memUsageSetting);
+			}
+		}, initialPageIndex);
 	}
 
-	public Task<PDDocument> load(File file, String password, InputStream keyStore, String alias) throws IOException {
+	public Task<PDDocument> load(File file, String password, InputStream keyStore, String alias) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, password, keyStore, alias), 0);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), password, keyStore, alias);
+			}
+		}, 0);
 	}
 
-	public Task<PDDocument> load(File file, int initialPageIndex, String password, InputStream keyStore, String alias) throws IOException {
+	public Task<PDDocument> load(File file, int initialPageIndex, String password, InputStream keyStore, String alias) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, password, keyStore, alias), initialPageIndex);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), password, keyStore, alias);
+			}
+		}, initialPageIndex);
 	}
 
-	public Task<PDDocument> load(File file, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) throws IOException {
+	public Task<PDDocument> load(File file, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, password, keyStore, alias, memUsageSetting), 0);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), password, keyStore, alias, memUsageSetting);
+			}
+		}, 0);
 	}
 
-	public Task<PDDocument> load(File file, int initialPageIndex, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) throws IOException {
+	public Task<PDDocument> load(File file, int initialPageIndex, String password, InputStream keyStore, String alias, MemoryUsageSetting memUsageSetting) {
 		// PDDocument.loadにFileを渡すとファイルがオープンされたままになり
 		// 上書き保存できなくなってしまうため、先にバイト列を取得してそれをPDDocument.loadに渡します。
-		byte[] input;
-		try(InputStream is = new FileInputStream(file)) {
-			input = is.readAllBytes();
-		}
-		return load(() -> PDDocument.load(input, password, keyStore, alias, memUsageSetting), initialPageIndex);
+		return load(() -> {
+			try(InputStream is = new FileInputStream(file)) {
+				return PDDocument.load(is.readAllBytes(), password, keyStore, alias, memUsageSetting);
+			}
+		}, initialPageIndex);
 	}
 
 	public Task<PDDocument> load(InputStream input) {
