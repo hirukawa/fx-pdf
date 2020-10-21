@@ -50,6 +50,7 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 	setDescription('Assembles a jar archive containing the main source code.')
 	archiveClassifier = 'sources'
 	from sourceSets.main.allSource
+	duplicatesStrategy 'include'
 }
 
 artifacts {
