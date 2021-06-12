@@ -1,23 +1,22 @@
 package net.osdn.util.javafx.scene.control.pdf;
 
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
+import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Region;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Screen;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -98,46 +97,13 @@ public class PdfView extends Region {
 		maxPageIndexProperty.set(value);
 	}
 
-	private DoubleProperty renderScaleProperty
-			= new SimpleDoubleProperty(this, "renderScale");
-
-	public ReadOnlyDoubleProperty renderScaleProperty() {
-		return renderScaleProperty;
-	}
-
-	public final double getRenderScale() {
-		return renderScaleProperty.get();
-	}
-
-	private ObjectProperty<Rectangle2D> renderBounds
-			= new SimpleObjectProperty<Rectangle2D>(this, "renderBounds", Rectangle2D.EMPTY);
-
-	public ReadOnlyObjectProperty<Rectangle2D> renderBoundsProperty() {
-		return renderBounds;
-	}
-
-	public Rectangle2D getRenderBounds() {
-		return renderBounds.get();
-	}
-
 	private RenderingHints renderingHints;
 
 	private ProgressIndicator progressIndicator;
-	private Canvas canvas;
-	private boolean isSizeDirty;
-	private boolean isPageDirty;
-	private boolean isBusy;
+	private ImageView imageView;
 
 	private ExecutorService worker;
-	private double width;
-	private double height;
-	private double scale;
 	private int initialPageIndex;
-	private PDDocument document;
-	private int pageIndex;
-
-	private BufferedImage bimg;
-	private WritableImage wimg;
 
 	public PdfView() {
 		worker = Executors.newSingleThreadExecutor(r -> {
@@ -146,10 +112,16 @@ public class PdfView extends Region {
 			return t;
 		});
 
-		canvas = new Canvas();
-		canvas.widthProperty().bind(widthProperty());
-		canvas.heightProperty().bind(heightProperty());
-		getChildren().add(canvas);
+		Rectangle clip = new Rectangle();
+		clip.widthProperty().bind(widthProperty());
+		clip.heightProperty().bind(heightProperty());
+		setClip(clip);
+
+		imageView = new ImageView();
+		imageView.setPreserveRatio(true);
+		imageView.fitWidthProperty().bind(widthProperty());
+		imageView.fitHeightProperty().bind(heightProperty());
+		getChildren().add(imageView);
 
 		progressIndicator = new ProgressIndicator();
 		progressIndicator.setVisible(false);
@@ -169,22 +141,10 @@ public class PdfView extends Region {
 			updatePage();
 		});
 		widthProperty().addListener((observable, oldValue, newValue) -> {
-			double width = getWidth();
-			double height = getHeight();
-			Platform.runLater(() -> {
-				if (width == getWidth() && height == getHeight()) {
-					updateSize();
-				}
-			});
+			updateSize();
 		});
 		heightProperty().addListener((observable, oldValue, newValue) -> {
-			double width = getWidth();
-			double height = getHeight();
-			Platform.runLater(() -> {
-				if (width == getWidth() && height == getHeight()) {
-					updateSize();
-				}
-			});
+			updateSize();
 		});
 	}
 
@@ -197,56 +157,62 @@ public class PdfView extends Region {
 	}
 
 	public void updatePage() {
-		isPageDirty = true;
 		update();
 	}
 
 	public void updateSize() {
-		isSizeDirty = true;
 		update();
 	}
 
+	private volatile boolean isBusy = false;
+	private volatile boolean isFollowed = false;
+
 	private void update() {
-		if (!isBusy) {
+		synchronized (worker) {
+			if(isFollowed) {
+				return;
+			}
+			if(isBusy) {
+				isFollowed = true;
+				return;
+			}
 			isBusy = true;
-			isPageDirty = false;
-			isSizeDirty = false;
-
-			width = getWidth();
-			height = getHeight();
-			document = documentProperty.get();
-			pageIndex = pageIndexProperty.get();
-
-			worker.submit(() -> {
-				WritableImage img = prepare();
-				Platform.runLater(() -> {
-					isBusy = false;
-					if (isSizeDirty) {
-						updateSize();
-					} else {
-						renderScaleProperty.set(scale);
-						GraphicsContext gc = canvas.getGraphicsContext2D();
-						gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-						if (img != null) {
-							double x = (canvas.getWidth() - img.getWidth()) / 2;
-							double y = (canvas.getHeight() - img.getHeight()) / 2;
-							gc.drawImage(img, x, y);
-							renderBounds.set(new Rectangle2D(x, y, img.getWidth(), img.getHeight()));
-						} else {
-							renderBounds.set(Rectangle2D.EMPTY);
-						}
-						if (isPageDirty) {
-							updatePage();
-						}
-					}
-				});
-			});
 		}
+
+		Screen screen = getScreen(this);
+		if(screen == null) {
+			screen = Screen.getPrimary();
+		}
+		PDDocument document = getDocument();
+		int pageIndex = getPageIndex();
+		RenderingHints hints = getRenderingHints();
+		double width = getWidth() * screen.getOutputScaleX();
+		double height = getHeight() * screen.getOutputScaleY();
+
+		worker.submit(() -> {
+			WritableImage image = createImage(document, pageIndex, hints, width, height);
+
+			Platform.runLater(() -> {
+				imageView.setImage(image);
+			});
+
+			synchronized (worker) {
+				if(isFollowed) {
+					isFollowed = false;
+					isBusy = false;
+					update();
+				} else {
+					isBusy = false;
+				}
+			}
+		});
 	}
 
-	protected WritableImage prepare() {
+	private BufferedImage bimg;
+	private WritableImage wimg;
+
+	private WritableImage createImage(PDDocument document, int pageIndex, RenderingHints renderingHints, double width, double height) {
 		if (document == null) {
-			scale = 0.0;
 			return null;
 		}
 		PDRectangle paper = document.getPage(pageIndex).getCropBox();
@@ -259,7 +225,7 @@ public class PdfView extends Region {
 			w = width;
 			h = width * paper.getHeight() / paper.getWidth();
 		}
-		scale = h / paper.getHeight();
+		double scale = h / paper.getHeight();
 
 		if (bimg == null || bimg.getWidth() != (int) w || bimg.getHeight() != (int) h) {
 			bimg = new BufferedImage((int) w, (int) h, BufferedImage.TYPE_INT_RGB);
@@ -275,7 +241,7 @@ public class PdfView extends Region {
 			if (renderingHints != null) {
 				renderer.setRenderingHints(renderingHints);
 			}
-			renderer.renderPageToGraphics(pageIndex, graphics, (float) scale);
+			renderer.renderPageToGraphics(pageIndex, graphics, (float)scale);
 			return SwingFXUtils.toFXImage(bimg, wimg);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -589,5 +555,18 @@ public class PdfView extends Region {
 		if(throwable[0] != null) {
 			throw new InvocationTargetException(throwable[0]);
 		}
+	}
+
+	private static Screen getScreen(Node node) {
+		if(node == null) {
+			return null;
+		}
+
+		Point2D pos = node.localToScreen(0.0, 0.0);
+		ObservableList<Screen> screens = Screen.getScreensForRectangle(pos.getX(), pos.getY(), 1.0, 1.0);
+		if(screens.size() > 0) {
+			return screens.get(0);
+		}
+		return null;
 	}
 }
