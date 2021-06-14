@@ -178,14 +178,17 @@ public class PdfView extends Region {
 			}
 			isBusy = true;
 		}
+		PDDocument document = getDocument();
+		if(document == null) {
+			imageView.setImage(null);
+		}
+		int pageIndex = getPageIndex();
+		RenderingHints hints = getRenderingHints();
 
 		Screen screen = getScreen(this);
 		if(screen == null) {
 			screen = Screen.getPrimary();
 		}
-		PDDocument document = getDocument();
-		int pageIndex = getPageIndex();
-		RenderingHints hints = getRenderingHints();
 		double width = getWidth() * screen.getOutputScaleX();
 		double height = getHeight() * screen.getOutputScaleY();
 
@@ -200,7 +203,9 @@ public class PdfView extends Region {
 				if(isFollowed) {
 					isFollowed = false;
 					isBusy = false;
-					update();
+					Platform.runLater(() -> {
+						update();
+					});
 				} else {
 					isBusy = false;
 				}
