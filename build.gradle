@@ -1,6 +1,6 @@
 apply plugin: 'java-library'
 
-version = '0.2.8'
+version = '0.2.9'
 
 tasks.withType(JavaCompile) {
 	sourceCompatibility = 11
@@ -21,8 +21,8 @@ dependencies {
 		includes: ['**/*.jar'],
 		excludes: ['**/*-sources.jar', '**/*-javadoc.jar'])
 
-	implementation 'org.apache.pdfbox:pdfbox:2.0.24'
-	implementation 'org.apache.pdfbox:fontbox:2.0.24'
+	implementation 'org.apache.pdfbox:pdfbox:2.0.26'
+	implementation 'org.apache.pdfbox:fontbox:2.0.26'
 }
 
 sourceSets.main.resources {

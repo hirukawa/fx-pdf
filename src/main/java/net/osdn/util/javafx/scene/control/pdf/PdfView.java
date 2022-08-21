@@ -1,15 +1,20 @@
 package net.osdn.util.javafx.scene.control.pdf;
 
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
@@ -97,6 +102,28 @@ public class PdfView extends Region {
 		maxPageIndexProperty.set(value);
 	}
 
+	private DoubleProperty renderScaleProperty
+			= new SimpleDoubleProperty(this, "renderScale");
+
+	public ReadOnlyDoubleProperty renderScaleProperty() {
+		return renderScaleProperty;
+	}
+
+	public final double getRenderScale() {
+		return renderScaleProperty.get();
+	}
+
+	private ObjectProperty<Rectangle2D> renderBounds
+			= new SimpleObjectProperty<Rectangle2D>(this, "renderBounds", Rectangle2D.EMPTY);
+
+	public ReadOnlyObjectProperty<Rectangle2D> renderBoundsProperty() {
+		return renderBounds;
+	}
+
+	public Rectangle2D getRenderBounds() {
+		return renderBounds.get();
+	}
+
 	private RenderingHints renderingHints;
 
 	private ProgressIndicator progressIndicator;
@@ -119,8 +146,6 @@ public class PdfView extends Region {
 
 		imageView = new ImageView();
 		imageView.setPreserveRatio(true);
-		imageView.fitWidthProperty().bind(widthProperty());
-		imageView.fitHeightProperty().bind(heightProperty());
 		getChildren().add(imageView);
 
 		progressIndicator = new ProgressIndicator();
@@ -178,11 +203,45 @@ public class PdfView extends Region {
 			}
 			isBusy = true;
 		}
+
+		int pageIndex = getPageIndex();
+
 		PDDocument document = getDocument();
 		if(document == null) {
 			imageView.setImage(null);
+			imageView.setX(0.0);
+			imageView.setY(0.0);
+			imageView.setFitWidth(0.0);
+			imageView.setFitHeight(0.0);
+			renderScaleProperty.set(0.0);
+			renderBounds.set(Rectangle2D.EMPTY);
+		} else {
+			PDRectangle paper = document.getPage(pageIndex).getCropBox();
+			int rotation = document.getPage(pageIndex).getRotation();
+			double paperWidth = (rotation % 180 == 0) ? paper.getWidth() : paper.getHeight();
+			double paperHeight = (rotation % 180 == 0) ? paper.getHeight() : paper.getWidth();
+			double pdfViewWidth = getWidth();
+			double pdfViewHeight = getHeight();
+			double w;
+			double h;
+			if (paperWidth / paperHeight < pdfViewWidth / pdfViewHeight) {
+				w = pdfViewHeight * paperWidth / paperHeight;
+				h = pdfViewHeight;
+			} else {
+				w = pdfViewWidth;
+				h = pdfViewWidth * paperHeight / paperWidth;
+			}
+			double x = (pdfViewWidth - w) / 2;
+			double y = (pdfViewHeight - h) / 2;
+			double scale = h / paperHeight;
+			imageView.setX(x);
+			imageView.setY(y);
+			imageView.setFitWidth(w);
+			imageView.setFitHeight(h);
+			renderScaleProperty.set(scale);
+			renderBounds.set(new Rectangle2D(x, y, w, h));
 		}
-		int pageIndex = getPageIndex();
+
 		RenderingHints hints = getRenderingHints();
 
 		Screen screen = getScreen(this);
@@ -196,7 +255,9 @@ public class PdfView extends Region {
 			WritableImage image = createImage(document, pageIndex, hints, width, height);
 
 			Platform.runLater(() -> {
-				imageView.setImage(image);
+				if(image != null) {
+					imageView.setImage(image);
+				}
 			});
 
 			synchronized (worker) {
@@ -221,16 +282,20 @@ public class PdfView extends Region {
 			return null;
 		}
 		PDRectangle paper = document.getPage(pageIndex).getCropBox();
+		int rotation = document.getPage(pageIndex).getRotation();
+		double paperWidth = (rotation % 180 == 0) ? paper.getWidth() : paper.getHeight();
+		double paperHeight = (rotation % 180 == 0) ? paper.getHeight() : paper.getWidth();
+
 		double w;
 		double h;
-		if (paper.getWidth() / paper.getHeight() < width / height) {
-			w = height * paper.getWidth() / paper.getHeight();
+		if (paperWidth / paperHeight < width / height) {
+			w = height * paperWidth / paperHeight;
 			h = height;
 		} else {
 			w = width;
-			h = width * paper.getHeight() / paper.getWidth();
+			h = width * paperHeight / paperWidth;
 		}
-		double scale = h / paper.getHeight();
+		double scale = h / paperHeight;
 
 		if (bimg == null || bimg.getWidth() != (int) w || bimg.getHeight() != (int) h) {
 			bimg = new BufferedImage((int) w, (int) h, BufferedImage.TYPE_INT_RGB);
