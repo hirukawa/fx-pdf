@@ -192,34 +192,14 @@ public class PdfView extends Region {
 	private volatile boolean isBusy = false;
 	private volatile boolean isFollowed = false;
 
-	private void update() {
-		synchronized (worker) {
-			if(isFollowed) {
-				return;
-			}
-			if(isBusy) {
-				isFollowed = true;
-				return;
-			}
-			isBusy = true;
-		}
+	private double paperWidth = 0.0;
+	private double paperHeight = 0.0;
 
-		int pageIndex = getPageIndex();
-
-		PDDocument document = getDocument();
-		if(document == null) {
-			imageView.setImage(null);
-			imageView.setX(0.0);
-			imageView.setY(0.0);
-			imageView.setFitWidth(0.0);
-			imageView.setFitHeight(0.0);
-			renderScaleProperty.set(0.0);
-			renderBounds.set(Rectangle2D.EMPTY);
-		} else {
-			PDRectangle paper = document.getPage(pageIndex).getCropBox();
-			int rotation = document.getPage(pageIndex).getRotation();
-			double paperWidth = (rotation % 180 == 0) ? paper.getWidth() : paper.getHeight();
-			double paperHeight = (rotation % 180 == 0) ? paper.getHeight() : paper.getWidth();
+	/** ImageView を PdfView の中央に表示されるようにします。
+	 *
+	 */
+	private void adjustCenter() {
+		if(paperWidth > 0.0 && paperHeight > 0.0) {
 			double pdfViewWidth = getWidth();
 			double pdfViewHeight = getHeight();
 			double w;
@@ -240,7 +220,43 @@ public class PdfView extends Region {
 			imageView.setFitHeight(h);
 			renderScaleProperty.set(scale);
 			renderBounds.set(new Rectangle2D(x, y, w, h));
+		} else {
+			imageView.setX(0.0);
+			imageView.setY(0.0);
+			imageView.setFitWidth(0.0);
+			imageView.setFitHeight(0.0);
+			renderScaleProperty.set(0.0);
+			renderBounds.set(Rectangle2D.EMPTY);
 		}
+	}
+
+	private void update() {
+		synchronized (worker) {
+			if(isFollowed) {
+				adjustCenter();
+				return;
+			}
+			if(isBusy) {
+				isFollowed = true;
+				adjustCenter();
+				return;
+			}
+			isBusy = true;
+		}
+
+		int pageIndex = getPageIndex();
+		PDDocument document = getDocument();
+		if(document == null) {
+			paperWidth = 0.0;
+			paperHeight = 0.0;
+			imageView.setImage(null);
+		} else {
+			PDRectangle paper = document.getPage(pageIndex).getCropBox();
+			int rotation = document.getPage(pageIndex).getRotation();
+			paperWidth = (rotation % 180 == 0) ? paper.getWidth() : paper.getHeight();
+			paperHeight = (rotation % 180 == 0) ? paper.getHeight() : paper.getWidth();
+		}
+		adjustCenter();
 
 		RenderingHints hints = getRenderingHints();
 
