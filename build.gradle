@@ -1,16 +1,22 @@
-apply plugin: 'java-library'
+plugins {
+	id 'java'
+}
 
-version = '0.3'
+version = '0.4'
 
-tasks.withType(JavaCompile) {
+java {
 	sourceCompatibility = 11
 	targetCompatibility = 11
+}
+
+compileJava {
+	options.encoding = 'UTF-8'
 	options.compilerArgs << '-Xlint:all'
 }
 
-def defaultEncoding = 'UTF-8'
-tasks.withType(AbstractCompile).each { it.options.encoding = defaultEncoding }
-tasks.withType(GroovyCompile).each { it.groovyOptions.encoding = defaultEncoding }
+sourceSets.main.resources {
+	srcDirs = [ 'src/main/resources', 'src/main/java' ]
+}
 
 repositories {
 	mavenCentral()
@@ -21,34 +27,14 @@ dependencies {
 		includes: ['**/*.jar'],
 		excludes: ['**/*-sources.jar', '**/*-javadoc.jar'])
 
-	implementation 'org.apache.pdfbox:pdfbox:2.0.26'
-	implementation 'org.apache.pdfbox:fontbox:2.0.26'
-}
-
-sourceSets.main.resources {
-	srcDirs = ['src/main/resources', 'src/main/java']
+	implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+	implementation 'org.apache.pdfbox:fontbox:2.0.29'
 }
 
 defaultTasks 'clean', 'build'
 
-
-javadoc {
-	options.charSet = 'UTF-8'
-	options.encoding = 'UTF-8'
-	options.stylesheetFile = new File(rootDir, 'javadoc.css')
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-	setGroup('build')
-	setDescription('Generates Javadoc API documentation as a jar archive.')
-	archiveClassifier = 'javadoc'
-	from javadoc.destinationDir
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-	setGroup('build')
-	setDescription('Assembles a jar archive containing the main source code.')
-	archiveClassifier = 'sources'
-	from sourceSets.main.allSource
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+jar {
+	manifest {
+		attributes "Specification-Version": "${project.version}"
+	}
 }

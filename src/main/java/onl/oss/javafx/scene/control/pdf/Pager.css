@@ -1,0 +1,30 @@
+.pager {
+	-fx-spacing: 5px;
+	-fx-alignment: center;
+	-fx-background-color: #303030;
+}
+.pager > .label {
+	-fx-alignment: center;
+	-fx-min-width: 80px;
+	-fx-font-size: 14px;
+	-fx-text-fill: #F2F2F2;
+}
+.pager > .button {
+	-fx-pref-width: 40px;
+	-fx-background-insets: 0;
+	-fx-background-radius: 0;
+	-fx-background-color: transparent;
+	-fx-text-fill: #CCCCCC;
+	-fx-skin: "net.osdn.util.javafx.scene.control.pdf.TransitionButtonSkin";
+}
+.pager > .button:focused {
+	-fx-background-color: rgba(255, 255, 255, 0.2);
+}
+.pager > .button:hover {
+	-fx-background-color: rgba(255, 255, 255, 0.2);
+	-fx-text-fill: #FFFFFF;
+}
+.pager > .button:pressed {
+	-fx-background-color: rgba(255, 255, 255, 0.1);
+	-fx-text-fill: #CCCCCC;
+}
