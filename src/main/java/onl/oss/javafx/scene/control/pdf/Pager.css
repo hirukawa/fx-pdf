@@ -15,7 +15,7 @@
 	-fx-background-radius: 0;
 	-fx-background-color: transparent;
 	-fx-text-fill: #CCCCCC;
-	-fx-skin: "net.osdn.util.javafx.scene.control.pdf.TransitionButtonSkin";
+	-fx-skin: "onl.oss.javafx.scene.control.pdf.TransitionButtonSkin";
 }
 .pager > .button:focused {
 	-fx-background-color: rgba(255, 255, 255, 0.2);

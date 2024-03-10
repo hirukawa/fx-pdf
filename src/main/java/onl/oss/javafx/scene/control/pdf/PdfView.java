@@ -235,14 +235,14 @@ public final class PdfView extends Region {
 			imageView.setFitWidth(w);
 			imageView.setFitHeight(h);
 			renderScalePropertyInternal().set(scale);
-			renderBounds.set(new Rectangle2D(x, y, w, h));
+			renderBoundsPropertyInternal().set(new Rectangle2D(x, y, w, h));
 		} else {
 			imageView.setX(0.0);
 			imageView.setY(0.0);
 			imageView.setFitWidth(0.0);
 			imageView.setFitHeight(0.0);
 			renderScalePropertyInternal().set(0.0);
-			renderBounds.set(Rectangle2D.EMPTY);
+			renderBoundsPropertyInternal().set(Rectangle2D.EMPTY);
 		}
 	}
 
